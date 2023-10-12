@@ -18,7 +18,6 @@ api = Api(app)
 
 
 class Plants(Resource):
-
     def get(self):
         plants = [plant.to_dict() for plant in Plant.query.all()]
         return make_response(jsonify(plants), 200)
@@ -30,12 +29,36 @@ class Plants(Resource):
             name=data['name'],
             image=data['image'],
             price=data['price'],
+            is_in_stock=True  # Assuming new plants are always in stock by default
         )
 
         db.session.add(new_plant)
         db.session.commit()
 
         return make_response(new_plant.to_dict(), 201)
+
+    def patch(self, id):
+        data = request.get_json()
+        plant = Plant.query.get(id)
+
+        if plant:
+            plant.is_in_stock = data.get('is_in_stock', plant.is_in_stock)
+            db.session.commit()
+            return make_response(plant.to_dict(), 200)
+        else:
+            return make_response(jsonify({"error": "Plant not found"}), 404)
+
+    def delete(self, id):
+        plant = Plant.query.get(id)
+
+        if plant:
+            db.session.delete(plant)
+            db.session.commit()
+            return '', 204
+        else:
+            return make_response(jsonify({"error": "Plant not found"}), 404)
+
+    
 
 
 api.add_resource(Plants, '/plants')
